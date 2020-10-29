@@ -69,6 +69,8 @@ func (r *ExistingInfraClusterReconciler) Reconcile(req ctrl.Request) (_ ctrl.Res
 	ctx := context.TODO() // upstream will add this eventually
 	contextLog := log.WithField("name", req.NamespacedName)
 
+	log.Info("~~~~~ In the reconcile")
+
 	// request only contains the name of the object, so fetch it from the api-server
 	eic := &clusterweaveworksv1alpha3.ExistingInfraCluster{}
 	err := r.Get(ctx, req.NamespacedName, eic)
@@ -132,7 +134,7 @@ func (r *ExistingInfraClusterReconciler) Reconcile(req ctrl.Request) (_ ctrl.Res
 		return ctrl.Result{}, errors.New("ClusterReconciler#Delete not implemented")
 	}
 
-	eic.Status.Ready = true // TODO: know whether it is really ready
+	// eic.Status.Ready = true // TODO: know whether it is really ready
 
 	return ctrl.Result{}, nil
 }

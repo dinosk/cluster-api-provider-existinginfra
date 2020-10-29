@@ -335,6 +335,7 @@ func CreateSeedNodeSetupPlan(o *OS, params SeedNodeParams) (*plan.Plan, error) {
 	}
 	log.Info("Got seed node plan")
 
+	log.Infof("~~~~~~~\nAnnotating Seed Node: %s", seedNodePlan.ToState().ToJSON())
 	b.AddResource("node:plan", &resource.KubectlAnnotateSingleNode{Key: recipe.PlanKey, Value: seedNodePlan.ToState().ToJSON()}, plan.DependOn("kubeadm:init"))
 
 	if params.AuthInfo != nil {

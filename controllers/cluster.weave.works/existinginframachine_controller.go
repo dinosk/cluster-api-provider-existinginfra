@@ -193,6 +193,7 @@ func (a *ExistingInfraMachineReconciler) create(ctx context.Context, installer *
 	if err = a.setNodeProviderIDIfNecessary(ctx, node); err != nil {
 		return err
 	}
+	log.Infof("~~~~~~ The plan to annotate the node is: %s", nodePlan.ToState().ToJSON())
 	if err = a.setNodeAnnotation(ctx, node, recipe.PlanKey, nodePlan.ToState().ToJSON()); err != nil {
 		return err
 	}
@@ -233,6 +234,7 @@ func (a *ExistingInfraMachineReconciler) connectTo(ctx context.Context, c *exist
 
 func (a *ExistingInfraMachineReconciler) getMachineInfo(ctx context.Context, privateAddress string) (os.MachineInfo, error) {
 	var secret corev1.Secret
+	log.Info("Looking for connection-info secret in ns: ", a.controllerNamespace)
 	err := a.Client.Get(ctx, client.ObjectKey{Namespace: a.controllerNamespace, Name: ConnectionSecretName}, &secret)
 	if err != nil {
 		return os.MachineInfo{}, gerrors.Wrap(err, "failed to get connection secret")
@@ -458,6 +460,7 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 	if err != nil {
 		return gerrors.Wrapf(err, "Failed to parse node plan for machine %s", machine.Name)
 	}
+	log.Infof("~~~~~~~~ \nCurrentState Plan: %s", currentState.ToJSON())
 	// check equality by re-serialising to JSON; this avoids any formatting differences, also
 	// type differences between deserialised State and State created from Plan.
 	planJSON := planState.ToJSON()
@@ -465,6 +468,8 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 		contextLog.Info("Machine and node have matching plans; nothing to do")
 		return nil
 	}
+
+	log.Infof("~~~~~~~~ \nPlanState Plan: %s", planJSON)
 
 	if diffedPlan, err := currentState.Diff(planState); err == nil {
 		contextLog.Info("........................ DIFF PLAN ........................")
