@@ -34,6 +34,7 @@ func (ka *KubectlAnnotateSingleNode) Apply(runner plan.Runner, diff plan.Diff) (
 	if strings.Contains(nodeName, "\n") {
 		return false, fmt.Errorf("unexpected output in node name: %q", output)
 	}
+	fmt.Println("annotation: Before writing to the file: ", ka.Value)
 	path, err := writeTempFile(runner, []byte(ka.Value), "node_annotation")
 	if err != nil {
 		return false, errors.Wrap(err, "writeTempFile")
