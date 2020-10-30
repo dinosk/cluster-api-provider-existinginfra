@@ -328,13 +328,14 @@ func CreateSeedNodeSetupPlan(o *OS, params SeedNodeParams) (*plan.Plan, error) {
 		}
 	}
 
+	fmt.Printf("~~~~~~~\nCLUSTERSPEC: %s", cluster.Spec.String())
 	// Set plan as an annotation on node, just like controller does
 	seedNodePlan, err := seedNodeSetupPlan(o, params, &cluster.Spec, configMaps, kubernetesVersion)
 	if err != nil {
 		return nil, err
 	}
 	log.Info("Got seed node plan")
-
+	fmt.Printf("~~~~~~~\nAnnotating Seed Node JUST JSON: %s", seedNodePlan.ToJSON())
 	fmt.Printf("~~~~~~~\nAnnotating Seed Node: %s", seedNodePlan.ToState().ToJSON())
 	b.AddResource("node:plan", &resource.KubectlAnnotateSingleNode{Key: recipe.PlanKey, Value: seedNodePlan.ToState().ToJSON()}, plan.DependOn("kubeadm:init"))
 
