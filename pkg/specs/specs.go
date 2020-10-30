@@ -125,8 +125,10 @@ func ParseCluster(rc io.ReadCloser) (cluster *clusterv1.Cluster, eic *existingin
 		switch typed := obj.(type) {
 		case *clusterv1.Cluster:
 			cluster = typed
+			fmt.Println("Parsed cluster obj from cluster.yaml: ", cluster)
 		case *existinginfrav1.ExistingInfraCluster:
 			eic = typed
+			fmt.Println("Parsed eic obj from cluster.yaml: ", eic)
 		default:
 			return nil, nil, fmt.Errorf("unexpected type %T", obj)
 		}
