@@ -63,6 +63,7 @@ rules:
   resources:
   - daemonsets
   verbs:
+  - watch
   - get
   - delete
 ---
