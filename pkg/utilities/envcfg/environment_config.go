@@ -1,6 +1,8 @@
 package envcfg
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/cluster-api-provider-existinginfra/pkg/plan"
@@ -62,6 +64,9 @@ func GetEnvSpecificConfig(pkgType resource.PkgType, namespace string, cloudProvi
 			SystemVerification,
 		}
 	}
+
+	fmt.Println("SELinuxInstalled: ", seLinuxStatus.IsInstalled())
+	fmt.Println("SetSELinuxPermissive: ", seLinuxMode.IsEnforcing())
 
 	config := &EnvSpecificConfig{
 		ConntrackMax:          0,
