@@ -542,6 +542,7 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 	// contextLog.Infof("~~~~~~~ Node %s deleted.", node.ObjectMeta.Name)
 
 	if err = a.performActualUpdate(ctx, installer, machine, node, nodePlan, c); err != nil {
+		log.Info("Error in perform actual update: ", err)
 		return err
 	}
 
@@ -622,7 +623,7 @@ func (a *ExistingInfraMachineReconciler) performActualUpdate(
 		availableNodeExists := false
 		for _, otherNode := range nodes.Items {
 			if isMaster(&otherNode) && otherNode.Spec.Unschedulable == false {
-				log.Info("Node %s is available. Continuing with the update", otherNode.ObjectMeta.Name)
+				log.Infof("Node %s is available. Continuing with the update", otherNode.ObjectMeta.Name)
 				availableNodeExists = true
 			}
 		}
@@ -632,7 +633,7 @@ func (a *ExistingInfraMachineReconciler) performActualUpdate(
 	}
 
 	if err := drain.Drain(node, a.clientSet, drain.Params{
-		Force:               true,
+		Force:               false,
 		DeleteLocalData:     true,
 		IgnoreAllDaemonSets: true,
 	}); err != nil {
