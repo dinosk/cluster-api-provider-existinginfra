@@ -532,6 +532,12 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 		return a.kubeadmUpOrDowngrade(ctx, machine, node, installer, version, planJSON, recipe.Worker)
 	}
 
+	// Remove node from the cluster so that it can join at the end of the update
+	err = a.Client.Delete(ctx, node)
+	if err != nil {
+		return gerrors.Wrap(err, "failed to remove node before update")
+	}
+
 	if err = a.performActualUpdate(ctx, installer, machine, node, nodePlan, c); err != nil {
 		return err
 	}
