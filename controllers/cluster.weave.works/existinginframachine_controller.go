@@ -620,8 +620,9 @@ func (a *ExistingInfraMachineReconciler) performActualUpdate(
 		}
 
 		availableNodeExists := false
-		for _, node := range nodes.Items {
-			if isMaster(&node) && node.Spec.Unschedulable == false {
+		for _, otherNode := range nodes.Items {
+			if isMaster(&otherNode) && otherNode.Spec.Unschedulable == false {
+				log.Info("Node %s is available. Continuing with the update", otherNode.ObjectMeta.Name)
 				availableNodeExists = true
 			}
 		}
@@ -637,12 +638,17 @@ func (a *ExistingInfraMachineReconciler) performActualUpdate(
 	}); err != nil {
 		return err
 	}
+	log.Info("Setting up node...")
 	if err := installer.SetupNode(nodePlan); err != nil {
 		return gerrors.Wrapf(err, "failed to set up machine %s", machine.Name)
 	}
+	log.Info("Node set up ok.")
+
+	log.Info("Uncordoning node")
 	if err := a.uncordon(ctx, node); err != nil {
 		return err
 	}
+	log.Info("Node uncordoned.")
 	return nil
 }
 
