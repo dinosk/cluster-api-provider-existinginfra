@@ -1162,7 +1162,7 @@ spec:
       containers:
       - name: controller
         imagePullPolicy: Always
-        image: docker.io/weaveworks/cluster-api-existinginfra-controller:v0.0.6
+        image: dinosk/wks-controller
         env:
         - name: EXISTINGINFRA_CONTROLLER_IMAGE
           value: docker.io/weaveworks/cluster-api-existinginfra-controller:v0.0.6
