@@ -1173,7 +1173,7 @@ spec:
         - name: POD_NODE
           valueFrom:
             fieldRef:
-              fieldPath: spec.nodeNamea
+              fieldPath: spec.nodeName
         args:
         - --verbose
         resources:
