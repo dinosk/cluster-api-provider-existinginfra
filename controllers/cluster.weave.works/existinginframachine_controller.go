@@ -533,10 +533,12 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 	}
 
 	// Remove node from the cluster so that it can join at the end of the update
+	contextLog.Infof("~~~~~~~ Deleting node %s from cluster before updating...", node.ObjectMeta.Name)
 	err = a.Client.Delete(ctx, node)
 	if err != nil {
 		return gerrors.Wrap(err, "failed to remove node before update")
 	}
+	contextLog.Infof("~~~~~~~ Node %s deleted.", node.ObjectMeta.Name)
 
 	if err = a.performActualUpdate(ctx, installer, machine, node, nodePlan, c); err != nil {
 		return err
