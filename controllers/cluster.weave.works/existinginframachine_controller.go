@@ -533,13 +533,13 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 		return a.kubeadmUpOrDowngrade(ctx, machine, node, installer, version, planJSON, recipe.Worker)
 	}
 
-	// Remove node from the cluster so that it can join at the end of the update
-	contextLog.Infof("~~~~~~~ Deleting node %s from cluster before updating...", node.ObjectMeta.Name)
-	err = a.Client.Delete(ctx, node)
-	if err != nil {
-		return gerrors.Wrap(err, "failed to remove node before update")
-	}
-	contextLog.Infof("~~~~~~~ Node %s deleted.", node.ObjectMeta.Name)
+	// // Remove node from the cluster so that it can join at the end of the update
+	// contextLog.Infof("~~~~~~~ Deleting node %s from cluster before updating...", node.ObjectMeta.Name)
+	// err = a.Client.Delete(ctx, node)
+	// if err != nil {
+	// 	return gerrors.Wrap(err, "failed to remove node before update")
+	// }
+	// contextLog.Infof("~~~~~~~ Node %s deleted.", node.ObjectMeta.Name)
 
 	if err = a.performActualUpdate(ctx, installer, machine, node, nodePlan, c); err != nil {
 		return err
@@ -610,7 +610,9 @@ func (a *ExistingInfraMachineReconciler) performActualUpdate(
 	// Before draining the node check if the wks-controller is running on it
 	// If yes, ensure that there are other control-plane nodes that can schedule the
 	// wks-controller pod, in order to not make all control-plane nodes unschedulable.
+	log.Info("Checking if wks-controller is running on the node that is being updated...")
 	if node.ObjectMeta.Name == goos.Getenv("POD_NODE") {
+		log.Info("It is. Checking if there are schedulable control-plane nodes before cordoning the node...")
 		var nodes corev1.NodeList
 		err := a.Client.List(ctx, &nodes)
 		if err != nil {
