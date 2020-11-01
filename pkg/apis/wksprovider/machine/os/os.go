@@ -1170,6 +1170,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+		- name: POD_NODE
+		  valueFrom:
+			fieldRef:
+			  fieldPath: spec.nodeName
         args:
         - --verbose
         resources:
