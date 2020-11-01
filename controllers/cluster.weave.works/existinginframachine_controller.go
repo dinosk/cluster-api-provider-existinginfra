@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	goos "os"
 	"strings"
 	"time"
 
@@ -605,6 +606,28 @@ func (a *ExistingInfraMachineReconciler) performActualUpdate(
 	node *corev1.Node,
 	nodePlan *plan.Plan,
 	cluster *existinginfrav1.ExistingInfraCluster) error {
+
+	// Before draining the node check if the wks-controller is running on it
+	// If yes, ensure that there are other control-plane nodes that can schedule the
+	// wks-controller pod, in order to not make all control-plane nodes unschedulable.
+	if node.ObjectMeta.Name == goos.Getenv("POD_NODE") {
+		var nodes corev1.NodeList
+		err := a.Client.List(ctx, &nodes)
+		if err != nil {
+			return gerrors.Wrap(err, "failed to list nodes")
+		}
+
+		availableNodeExists := false
+		for _, node := range nodes.Items {
+			if isMaster(&node) && node.Spec.Unschedulable == false {
+				availableNodeExists = true
+			}
+		}
+		if !availableNodeExists {
+			return gerrors.New("no control-plane node is schedulable currently for the wks-controller. Aborting update")
+		}
+	}
+
 	if err := drain.Drain(node, a.clientSet, drain.Params{
 		Force:               true,
 		DeleteLocalData:     true,
