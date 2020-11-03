@@ -44,6 +44,10 @@ func GetEnvSpecificConfig(pkgType resource.PkgType, namespace string, cloudProvi
 		return nil, errors.Wrap(err, "GetSELinuxStatus")
 	}
 
+	log.Info("In GetEnvSpecificConfig.")
+	log.Info("seLinuxStatus: ", seLinuxStatus)
+	log.Info("seLinuxMode: ", seLinuxMode)
+
 	inContainerVM, err := osres.IsOSInContainerVM()
 	if err != nil {
 		return nil, errors.Wrap(err, "IsOSInContainerVM")
@@ -62,6 +66,10 @@ func GetEnvSpecificConfig(pkgType resource.PkgType, namespace string, cloudProvi
 			SystemVerification,
 		}
 	}
+
+	log.Info("inContainerVM: ", inContainerVM)
+	log.Info("seLinuxStatus: ", seLinuxStatus)
+	log.Info("seLinuxMode: ", seLinuxMode)
 
 	config := &EnvSpecificConfig{
 		ConntrackMax:          0,

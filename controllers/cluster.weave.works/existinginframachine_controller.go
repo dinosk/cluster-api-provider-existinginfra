@@ -441,15 +441,15 @@ func (a *ExistingInfraMachineReconciler) update(ctx context.Context, c *existing
 		return gerrors.Wrapf(err, "failed to find node by address: %s", addr)
 	}
 	contextLog = contextLog.WithFields(log.Fields{"node": node.Name})
-
-	if err = a.setNodeProviderIDIfNecessary(ctx, node); err != nil {
-		return err
-	}
 	isMaster := isMaster(node)
 	if isMaster {
 		if err := a.prepareForMasterUpdate(ctx, node); err != nil {
 			return err
 		}
+	}
+
+	if err = a.setNodeProviderIDIfNecessary(ctx, node); err != nil {
+		return err
 	}
 	nodePlan, err := a.getNodePlan(ctx, c, machine, a.getMachineAddress(eim), installer)
 	if err != nil {
