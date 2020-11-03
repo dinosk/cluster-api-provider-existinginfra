@@ -68,14 +68,14 @@ func GetEnvSpecificConfig(pkgType resource.PkgType, namespace string, cloudProvi
 	}
 
 	log.Info("inContainerVM: ", inContainerVM)
-	log.Info("seLinuxStatus: ", seLinuxStatus)
+	log.Info("seLinuxStatus.IsInstalled: ", seLinuxStatus.IsInstalled())
 	log.Info("seLinuxMode: ", seLinuxMode)
 
 	config := &EnvSpecificConfig{
 		ConntrackMax:          0,
 		UseIPTables:           !inContainerVM,
 		SELinuxInstalled:      seLinuxStatus.IsInstalled(),
-		SetSELinuxPermissive:  !inContainerVM && seLinuxStatus.IsInstalled() && seLinuxMode.IsEnforcing(), // if it's enforcing, set to permissive
+		SetSELinuxPermissive:  !inContainerVM && seLinuxStatus.IsInstalled(), // if selinux is installed, try to set to permissive
 		LockYUMPkgs:           pkgType == resource.PkgTypeRPM,
 		DisableSwap:           !inContainerVM,
 		IgnorePreflightErrors: ignorePreflightErrors,
