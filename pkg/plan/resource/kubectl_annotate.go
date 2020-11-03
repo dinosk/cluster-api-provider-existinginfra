@@ -39,7 +39,7 @@ func (ka *KubectlAnnotateSingleNode) Apply(runner plan.Runner, diff plan.Diff) (
 		return false, errors.Wrap(err, "writeTempFile")
 	}
 	//nolint:errcheck
-	defer runner.RunCommand(fmt.Sprintf("rm -vf %q", path), nil)
+	// defer runner.RunCommand(fmt.Sprintf("rm -vf %q", path), nil)
 
 	cmd := fmt.Sprintf("kubectl annotate %q %s=\"$(cat %s)\"", nodeName, ka.Key, path)
 
