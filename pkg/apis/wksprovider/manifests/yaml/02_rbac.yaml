@@ -54,8 +54,10 @@ rules:
   resources:
   - configmaps
   verbs:
+  - create
   - get
   - list
+  - update
 # The below is required for the WKS controller to be able to delete daemonsets
 # upon machine deletions.
 - apiGroups:

@@ -2,6 +2,7 @@ package os
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -138,6 +139,8 @@ type ControllerParams struct {
 	// ImageBuiltin is the WKS controller image to use when generating the WKS
 	// controller manifest from in-memory data.
 	ImageBuiltin string
+	// Namespace in which the controller runs
+	Namespace string
 }
 
 // MachineInfo holds connection information (key, ips, ports) about a machine
@@ -372,19 +375,56 @@ func CreateSeedNodeSetupPlan(o *OS, params SeedNodeParams) (*plan.Plan, error) {
 		b.AddResource("install:capi", ctlrRsc, plan.DependOn("kubectl:apply:cluster", "install:connection:info"))
 	}
 
-	wksCtlrManifest, err := WksControllerManifest(params.Controller.ImageOverride, params.Namespace)
+	// Create a config map tracking cluster parameters and node creation
+	cmap, err := CreateClusterConfigMap(&params.ExistingInfraCluster, params.Namespace, params.PrivateIP)
 	if err != nil {
 		return nil, err
 	}
 
+	cmapManifest, err := yaml.Marshal(cmap)
+	if err != nil {
+		return nil, err
+	}
+
+	cmapRes := &resource.KubectlApply{Manifest: cmapManifest, Filename: object.String("clusterconfigmap")}
+	b.AddResource("kubectl:apply:cluster-config-map", cmapRes, plan.DependOn(dep))
+	wksCtlrManifest, err := WksControllerManifest(params.Controller.ImageOverride, params.Namespace)
+	if err != nil {
+		return nil, err
+	}
 	ctlrRsc := &resource.KubectlApply{Manifest: wksCtlrManifest, Filename: object.String("wks_controller.yaml")}
-	b.AddResource("install:wks", ctlrRsc, plan.DependOn("kubectl:apply:cluster", dep))
+	b.AddResource("install:wks", ctlrRsc, plan.DependOn("kubectl:apply:cluster", "kubectl:apply:cluster-config-map"))
 
 	if err := ConfigureFlux(b, params); err != nil {
 		return nil, errors.Wrap(err, "Failed to configure flux")
 	}
 
 	return CreatePlan(b)
+}
+
+func CreateClusterConfigMap(eic *existinginfrav1.ExistingInfraCluster, namespace, seedNodeIP string) (*v1.ConfigMap, error) {
+	configMap := &v1.ConfigMap{}
+	configMap.TypeMeta.APIVersion = "v1"
+	configMap.TypeMeta.Kind = "ConfigMap"
+	configMap.Name = eic.Name
+	configMap.Namespace = namespace
+	if configMap.Data == nil {
+		configMap.Data = map[string]string{}
+	}
+
+	specBytes, err := json.Marshal(eic.Spec)
+	if err != nil {
+		return nil, err
+	}
+	configMap.Data["spec"] = fmt.Sprintf("%v", sha256.Sum256(specBytes))
+
+	machineList := []string{seedNodeIP}
+	machineListBytes, err := json.Marshal(machineList)
+	if err != nil {
+		return nil, err
+	}
+	configMap.Data["machines"] = string(machineListBytes)
+	return configMap, nil
 }
 
 func addSealedSecretWaitIfNecessary(b *plan.Builder, key, cert string) string {
@@ -459,6 +499,24 @@ func addAuthConfigMapIfNecessary(configMapManifests map[string][]byte, authConfi
 func capiControllerManifest(controller ControllerParams, namespace string) ([]byte, error) {
 	return getManifest(capiControllerManifestString, namespace)
 }
+
+// func controllerRoleBinding(namespace string) ([]byte, error) {
+//  t, err := template.New("crb").Parse(wksControllerRoleBinding)
+//  if err != nil {
+//      return nil, err
+//  }
+
+//  var populated bytes.Buffer
+//  if err = t.Execute(&populated, struct {
+//      ControllerNamespace string
+//  }{
+//      namespace,
+//  }); err != nil {
+//      return nil, err
+//  }
+
+//  return populated.Bytes(), nil
+// }
 
 func WksControllerManifest(imageOverride, namespace string) ([]byte, error) {
 	content, err := getManifest(wksControllerManifestString, namespace)
@@ -1117,6 +1175,20 @@ spec:
             cpu: 100m
             memory: 20Mi
 `
+
+// const wksControllerRoleBinding = `apiVersion: rbac.authorization.k8s.io/v1
+// kind: ClusterRoleBinding
+// metadata:
+//   name: wks-controller-rolebinding
+// roleRef:
+//   apiGroup: rbac.authorization.k8s.io
+//   kind: ClusterRole
+//   name: wks-controller-role
+// subjects:
+// - kind: ServiceAccount
+//   name: default
+//   namespace: {{ .ControllerNamespace }}
+// `
 
 const wksControllerManifestString = `apiVersion: apps/v1
 kind: Deployment

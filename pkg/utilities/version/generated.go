@@ -1,3 +1,3 @@
 package version
 
-const ImageTag = "turn-controller-into-provider-e3082064"
+const ImageTag = "track-cluster-spec-modifications-and-repave-machines-when-they-change-87e80581"
